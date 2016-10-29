@@ -1,61 +1,70 @@
 import React, { Component } from 'react'
 import css from './App.css'
-
-const pads = {
-  snare: () => (
-    {
-      image: './img/snare.svg',
-      sound: './sound/snare.ogg'
-    }
-  ),
-  kick: () => (
-    {
-      image: './img/kick.svg',
-      sound: './sound/kick.ogg'
-    }
-  ),
-  cymbal: () => (
-    {
-      image: './img/cymbal.svg',
-      sound: './sound/cymbal.ogg'
-    }
-  )
-}
-
-const buildPad = (id, padPreset, x, y) => {
-  const pad = pads[padPreset]()
-   return {
-    x: x || 0,
-    y: y || 0,
-    image: pad.image,
-    souind: pad.sound,
-    id
-  }
-}
-
+ 
 const initialState = () => (
   {
     drum: [
-      buildPad(0, 'snare', 10, 10), 
-      buildPad(1, 'kick', 300, 300), 
-      buildPad(2, 'cymbal', 500, 300)
+      {
+        id: 0, 
+        image: './img/snare.svg',
+        sound: './sound/snare.ogg',
+        x: 400, 
+        y: 400, 
+        width: 100, 
+        height: 100,
+        bgColor: '#ddd',
+        invalid: false
+      }, 
+      {
+        id: 1, 
+        image: './img/kick.svg',
+        ound: './sound/kick.ogg',
+        x: 300, 
+        y: 300, 
+        width: 100, 
+        height: 100,
+        bgColor: '#ddd',
+        invalid: false
+      }, 
+      {
+        id: 2,
+        image: './img/cymbal.svg',
+        sound: './sound/cymbal.ogg',
+        x: 250, 
+        y: 100, 
+        width: 100, 
+        height: 100,
+        bgColor: '#ddd',
+        invalid: false
+      }, 
     ],
-    dragging: false
+    dragging: false,
+    pickXY: [0, 0]
   }
 )
 
+class Sidebar extends Component {
+  render() {
+    return (
+      <div className={css.sidebar}>
+       
+      </div>
+    )
+  }
+}
+
 
 class Pad extends Component {
-  buildStyle(x, y) {
+  buildStyle() {
     return {
       position: 'absolute',
-      left: this.props.x + 'px',
-      top: this.props.y + 'px',
-      width: 130 + 'px',
-      height: 130 + 'px', 
+      left: this.props.pad.x + 'px',
+      top: this.props.pad.y + 'px',
+      width: this.props.pad.width + 'px',
+      height: this.props.pad.height + 'px', 
       WebkitUserSelect: 'none',
       border: 'solid 3px black',
-      backgroundColor: '#c5c56e',
+      backgroundColor: this.props.pad.invalid ? 'red' : this.props.pad.bgColor,
       borderRadius: '100%'
     }
   }   
@@ -63,7 +72,7 @@ class Pad extends Component {
     return (
       <div
         style={this.buildStyle()}
-        onMouseDown={this.props.startDrag.bind(this, this.props.pad.id)}
+        onMouseDown={this.props.startDrag.bind(this, this.props.pad)}
       >
         {this.props.pad.id}
       </div>
@@ -71,30 +80,48 @@ class Pad extends Component {
   }
 }
 
+const padCenter = (pad) => ({x: pad.x + pad.width/2, y: pad.y + pad.height/2})
+const isColliding = (pad1, pad2) => {
+  const p1 = padCenter(pad1)
+  const p2 = padCenter(pad2)
+  if (
+    Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2) < Math.pow((pad1.width/2 + pad2.width/2)/2, 2)
+  ) {
+    return true
+  }
+  return false
+}
+
 export class App extends Component {
   constructor(props) {
     super(props)
     this.state = initialState()
   }
-  startDrag(id) {
-    this.setState({ dragging: id })
+  startDrag(pad, event) {
+    this.setState({ dragging: pad.id, pickXY: [pad.x - event.clientX, pad.y - event.clientY] })
   }
   stopDrag() {
-    this.setState({ dragging: null })
+    this.setState({ dragging: null, pickXY: [0, 0] })
   }
   tryDrag(event) {
-    if (this.state.dragging !== null) {
-      const newX = event.clientX - 65
-      const newY = event.clientY - 65
+    event.preventDefault()
+    if (this.state.dragging !== null) {  
       const drum = this.state.drum.map(pad => {
         if (pad.id === this.state.dragging) {
-          return {...pad, x: newX, y: newY}
+          const mouseX = event.clientX 
+          const mouseY = event.clientY
+          const x = mouseX + this.state.pickXY[0]
+          const y = mouseY + this.state.pickXY[1]
+
+          const collidingWith = this.state.drum.filter(otherPad => 
+            otherPad.id !== pad.id && isColliding(pad, otherPad))
+
+          return { ...pad, x, y, invalid: collidingWith.length > 0 }
         }
-        else {
-          return pad
-        }
+
+        return pad
       }) 
-      this.setState({drum})
+      this.setState({ drum})
     }
   }
   render() {
@@ -105,13 +132,12 @@ export class App extends Component {
         onMouseMove={this.tryDrag.bind(this)}
       >
         <h1 className={css.mode}>Edit mode</h1>
+        <Sidebar />
         { 
           this.state.drum.map( (pad, i) => 
             <Pad 
               key={i}
               pad={pad}
-              x={pad.x}
-              y={pad.y}
               startDrag={this.startDrag.bind(this)}
             />
           )
