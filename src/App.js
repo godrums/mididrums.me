@@ -5,44 +5,7 @@ import { Snare, Kick, Cymbal } from './images'
 
 const initialState = () => (
   {
-    drum: [
-      {
-        id: 0, 
-        image: Snare, 
-        sound: './sound/snare.ogg',
-        x: 400, 
-        y: 200, 
-        width: 160, 
-        height: 160,
-        bgColor: 'rgb(120, 240, 80)',
-        invalid: false,
-        zIndex: 0
-      }, 
-      {
-        id: 1, 
-        image: Snare,
-        sound: './sound/kick.ogg',
-        x: 300, 
-        y: 300, 
-        width: 160, 
-        height: 160,
-        bgColor: 'rgb(120, 240, 80)',
-        invalid: false,
-        zIndex: 1
-      }, 
-      {
-        id: 2,
-        image: Cymbal,
-        sound: './sound/cymbal.ogg',
-        x: 250, 
-        y: 100, 
-        width: 160, 
-        height: 160,
-        bgColor: 'rgb(120, 240, 80)',
-        invalid: false,
-        zIndex: 2
-      }, 
-    ],
+    drum: [],
     dragging: null,
     selected: null,
     pickXY: [0, 0]
@@ -53,7 +16,8 @@ class Sidebar extends Component {
   render() {
     return (
       <div className={css.sidebar}>
-       
+        <Snare color="white" onMouseDown={this.props.createPad.bind(this, Snare)} />
+        <Cymbal color="white" onMouseDown={this.props.createPad.bind(this, Cymbal)} />
       </div>
     )
   }
@@ -120,6 +84,21 @@ export class App extends Component {
   deselect(pad, event) {
     this.setState({ selected: null })
   }
+  createPad(padSvg, event) {
+    const newPad = {
+      id: this.state.drum.length, 
+      image: padSvg, 
+      sound: './sound/snare.ogg',
+      x: event.clientX - 160/2, 
+      y: event.clientY - 160/2, 
+      width: 160, 
+      height: 160,
+      bgColor: 'rgb(120, 240, 80)',
+      invalid: false,
+      zIndex: 0
+    }
+    this.setState({drum: [...this.state.drum, newPad], dragging: newPad.id, pickXY: [-160/2, -160/2]})
+  }
   startDrag(pad, event) {
     this.setState({ dragging: pad.id, pickXY: [pad.x - event.clientX, pad.y - event.clientY] })
   }
@@ -127,13 +106,14 @@ export class App extends Component {
     this.setState({ dragging: null, pickXY: [0, 0] })
   }
   tryDrag(event) {
+    console.log(this.state.pickXY)
     event.preventDefault()
 
     const drum = this.state.drum.map(pad => { 
       const collidingWith = this.state.drum.filter(otherPad => 
         otherPad.id !== pad.id && isColliding(pad, otherPad))
       if (collidingWith.length > 0) {
-      return {...pad, invalid:true}
+        return {...pad, invalid:true}
       }
 
       return {...pad, invalid: false}
@@ -163,8 +143,7 @@ export class App extends Component {
         onMouseUp={this.stopDrag.bind(this)}
         onMouseMove={this.tryDrag.bind(this)}
       >
-        <h1 className={css.mode}>Edit mode</h1>
-        <Sidebar />
+        <Sidebar createPad={this.createPad.bind(this)}/>
         { 
           this.state.drum.map( (pad, i) => 
             <Pad 
