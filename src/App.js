@@ -40,8 +40,9 @@ class Pad extends Component {
     }
   }   
   render() {
-    const color = this.props.selected ? 'white' : 
+    const color = 
                   this.props.pad.invalid ? '#ffbcbc' :
+                  this.props.selected ? 'white' : 
                   this.props.pad.bgColor
 
     return (
@@ -94,7 +95,7 @@ export class App extends Component {
       y: event.clientY - 160/2, 
       width: 160, 
       height: 160,
-      bgColor: '#888',
+      bgColor: `rgba(160, 160, 160, 0.9)`,
       invalid: false,
       zIndex: 0
     }
