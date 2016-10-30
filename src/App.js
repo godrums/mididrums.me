@@ -8,7 +8,8 @@ const initialState = () => (
     drum: [],
     dragging: null,
     selected: null,
-    pickXY: [0, 0]
+    pickXY: [0, 0],
+    backXY: [0, 0]
   }
 )
 
@@ -97,12 +98,22 @@ export class App extends Component {
       invalid: false,
       zIndex: 0
     }
-    this.setState({drum: [...this.state.drum, newPad], dragging: newPad.id, pickXY: [-160/2, -160/2]})
+    this.setState({drum: [...this.state.drum, newPad], dragging: newPad.id, pickXY: [-160/2, -160/2], backXY: [newPad.x, newPad.y]})
   }
-  startDrag(pad, event) {
-    this.setState({ dragging: pad.id, pickXY: [pad.x - event.clientX, pad.y - event.clientY] })
+  startDrag(pad, event) { 
+    this.setState({ dragging: pad.id, pickXY: [pad.x - event.clientX, pad.y - event.clientY], backXY: [pad.x, pad.y] })
   }
   stopDrag() {
+    if (this.state.drum.filter(pad => pad.invalid).length > 0) {
+      const drum = this.state.drum.map(pad => {
+        if (pad.id === this.state.dragging) {
+          return {...pad, x: this.state.backXY[0], y: this.state.backXY[1], invalid: false}
+        }
+        return {...pad, invalid: false}
+      })
+      this.setState({ drum, dragging: null, pickXY: [0, 0] })
+      return 
+    }
     this.setState({ dragging: null, pickXY: [0, 0] })
   }
   tryDrag(event) {
@@ -125,9 +136,22 @@ export class App extends Component {
         if (pad.id === this.state.dragging) {
           const mouseX = event.clientX 
           const mouseY = event.clientY
-          const x = mouseX + this.state.pickXY[0]
-          const y = mouseY + this.state.pickXY[1]
-            
+          let x = mouseX + this.state.pickXY[0]
+          let y = mouseY + this.state.pickXY[1]
+
+          if (x < 0) {
+            x = 0
+          }
+          if (x + pad.width > window.innerWidth) {
+            x = window.innerWidth - pad.width
+          }
+          if (y < 0) {
+            y = 0
+          }
+          if (y + pad.height > window.innerHeight) {
+            y = window.innerHeight - pad.height
+          } 
+
           return { ...pad, x, y}
         }
 
