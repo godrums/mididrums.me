@@ -16,8 +16,8 @@ class Sidebar extends Component {
   render() {
     return (
       <div className={css.sidebar}>
-        <Snare color="white" onMouseDown={this.props.createPad.bind(this, Snare)} />
-        <Cymbal color="white" onMouseDown={this.props.createPad.bind(this, Cymbal)} />
+        <Snare color="#ddd" onMouseDown={this.props.createPad.bind(this, Snare)} />
+        <Cymbal color="#ddd" onMouseDown={this.props.createPad.bind(this, Cymbal)} />
       </div>
     )
   }
@@ -39,8 +39,8 @@ class Pad extends Component {
     }
   }   
   render() {
-    const color = this.props.selected ? 'yellow' : 
-                  this.props.pad.invalid ? 'red' :
+    const color = this.props.selected ? 'white' : 
+                  this.props.pad.invalid ? '#ffbcbc' :
                   this.props.pad.bgColor
 
     return (
@@ -93,7 +93,7 @@ export class App extends Component {
       y: event.clientY - 160/2, 
       width: 160, 
       height: 160,
-      bgColor: 'rgb(120, 240, 80)',
+      bgColor: '#888',
       invalid: false,
       zIndex: 0
     }
